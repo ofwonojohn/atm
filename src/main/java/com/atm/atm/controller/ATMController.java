@@ -29,17 +29,19 @@ public class ATMController {
     private final ATMService atmService;
 
     /**
-     * Helper method to get account from session and check if logged in.
-     *
-     * @param session the HTTP session
-     * @return Account entity if logged in
+     * Helper method to get AccountDTO from session.
+     */
+    private AccountDTO getSessionAccountDTO(HttpSession session) {
+        return (AccountDTO) session.getAttribute("account");
+    }
+
+    /**
+     * Helper method to get Account entity from session.
      */
     private Account getSessionAccount(HttpSession session) {
-        String accountNumber = (String) session.getAttribute("accountNumber");
-        if (accountNumber == null) {
-            return null;
-        }
-        return accountService.getAccountEntityByNumber(accountNumber);
+        AccountDTO dto = getSessionAccountDTO(session);
+        if (dto == null) return null;
+        return accountService.getAccountEntityByNumber(dto.getAccountNumber());
     }
 
     /**
@@ -50,16 +52,10 @@ public class ATMController {
      * @return dashboard view
      */
     @GetMapping("/dashboard")
-    public String showDashboard(HttpSession session, Model model) {
-        String accountNumber = (String) session.getAttribute("accountNumber");
-        if (accountNumber == null) {
-            return "redirect:/auth/login";
-        }
-
-        Account account = getSessionAccount(session);
-        AccountDTO accountDTO = accountService.getAccountByNumber(accountNumber);
-        model.addAttribute("account", accountDTO);
-
+    public String dashboard(HttpSession session, Model model) {
+        AccountDTO account = getSessionAccountDTO(session);
+        if (account == null) return "redirect:/auth/login";
+        model.addAttribute("account", account);
         return "dashboard";
     }
 
@@ -71,11 +67,10 @@ public class ATMController {
      * @return withdraw view
      */
     @GetMapping("/withdraw")
-    public String showWithdrawPage(HttpSession session, Model model) {
-        if (session.getAttribute("accountNumber") == null) {
-            return "redirect:/auth/login";
-        }
-
+    public String showWithdrawForm(HttpSession session, Model model) {
+        AccountDTO account = getSessionAccountDTO(session);
+        if (account == null) return "redirect:/auth/login";
+        model.addAttribute("account", account);
         model.addAttribute("withdrawRequest", new WithdrawRequest());
         return "withdraw";
     }
@@ -90,38 +85,25 @@ public class ATMController {
      * @return dashboard on success, withdraw page on failure
      */
     @PostMapping("/withdraw")
-    public String withdraw(@Valid WithdrawRequest withdrawRequest,
-                           BindingResult bindingResult,
-                           HttpSession session,
-                           Model model) {
-
-        if (session.getAttribute("accountNumber") == null) {
-            return "redirect:/auth/login";
-        }
-
-        if (bindingResult.hasErrors()) {
-            return "withdraw";
-        }
-
+    public String withdraw(@Valid @ModelAttribute("withdrawRequest") WithdrawRequest withdrawRequest,
+                          BindingResult bindingResult,
+                          HttpSession session,
+                          Model model) {
+        AccountDTO accountDTO = getSessionAccountDTO(session);
+        if (accountDTO == null) return "redirect:/auth/login";
+        model.addAttribute("account", accountDTO);
+        if (bindingResult.hasErrors()) return "withdraw";
         try {
-            Account account = getSessionAccount(session);
-            TransactionDTO transaction = atmService.withdraw(account, withdrawRequest.getAmount());
-
+            Account account = accountService.getAccountEntityByNumber(accountDTO.getAccountNumber());
+            atmService.withdraw(account, withdrawRequest.getAmount());
             // Update session account
-            AccountDTO updatedAccount = accountService.getAccountByNumber(account.getAccountNumber());
-            session.setAttribute("account", updatedAccount);
-
-            model.addAttribute("successMessage",
-                    String.format("Successfully withdrawn: Rs. %.2f", transaction.getAmount()));
-            model.addAttribute("account", updatedAccount);
-
-            return "withdraw";
-
-        } catch (InvalidAmountException | InsufficientBalanceException e) {
-            model.addAttribute("error", e.getMessage());
+            session.setAttribute("account", accountService.getAccountByNumber(account.getAccountNumber()));
+            model.addAttribute("successMessage", "Withdrawal successful!");
             model.addAttribute("withdrawRequest", new WithdrawRequest());
-            return "withdraw";
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
         }
+        return "withdraw";
     }
 
     /**
@@ -132,11 +114,10 @@ public class ATMController {
      * @return deposit view
      */
     @GetMapping("/deposit")
-    public String showDepositPage(HttpSession session, Model model) {
-        if (session.getAttribute("accountNumber") == null) {
-            return "redirect:/auth/login";
-        }
-
+    public String showDepositForm(HttpSession session, Model model) {
+        AccountDTO account = getSessionAccountDTO(session);
+        if (account == null) return "redirect:/auth/login";
+        model.addAttribute("account", account);
         model.addAttribute("depositRequest", new DepositRequest());
         return "deposit";
     }
@@ -151,38 +132,25 @@ public class ATMController {
      * @return dashboard on success, deposit page on failure
      */
     @PostMapping("/deposit")
-    public String deposit(@Valid DepositRequest depositRequest,
-                          BindingResult bindingResult,
-                          HttpSession session,
-                          Model model) {
-
-        if (session.getAttribute("accountNumber") == null) {
-            return "redirect:/auth/login";
-        }
-
-        if (bindingResult.hasErrors()) {
-            return "deposit";
-        }
-
+    public String deposit(@Valid @ModelAttribute("depositRequest") DepositRequest depositRequest,
+                        BindingResult bindingResult,
+                        HttpSession session,
+                        Model model) {
+        AccountDTO accountDTO = getSessionAccountDTO(session);
+        if (accountDTO == null) return "redirect:/auth/login";
+        model.addAttribute("account", accountDTO);
+        if (bindingResult.hasErrors()) return "deposit";
         try {
-            Account account = getSessionAccount(session);
-            TransactionDTO transaction = atmService.deposit(account, depositRequest.getAmount());
-
+            Account account = accountService.getAccountEntityByNumber(accountDTO.getAccountNumber());
+            atmService.deposit(account, depositRequest.getAmount());
             // Update session account
-            AccountDTO updatedAccount = accountService.getAccountByNumber(account.getAccountNumber());
-            session.setAttribute("account", updatedAccount);
-
-            model.addAttribute("successMessage",
-                    String.format("Successfully deposited: Rs. %.2f", transaction.getAmount()));
-            model.addAttribute("account", updatedAccount);
-
-            return "deposit";
-
-        } catch (InvalidAmountException e) {
-            model.addAttribute("error", e.getMessage());
+            session.setAttribute("account", accountService.getAccountByNumber(account.getAccountNumber()));
+            model.addAttribute("successMessage", "Deposit successful!");
             model.addAttribute("depositRequest", new DepositRequest());
-            return "deposit";
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
         }
+        return "deposit";
     }
 
     /**
@@ -194,17 +162,21 @@ public class ATMController {
      */
     @GetMapping("/history")
     public String showTransactionHistory(HttpSession session, Model model) {
-        if (session.getAttribute("accountNumber") == null) {
-            return "redirect:/auth/login";
-        }
-
-        Account account = getSessionAccount(session);
+        AccountDTO accountDTO = getSessionAccountDTO(session);
+        if (accountDTO == null) return "redirect:/auth/login";
+        Account account = accountService.getAccountEntityByNumber(accountDTO.getAccountNumber());
         List<TransactionDTO> transactions = atmService.getTransactionHistory(account);
-        AccountDTO accountDTO = accountService.getAccountByNumber(account.getAccountNumber());
-
         model.addAttribute("account", accountDTO);
         model.addAttribute("transactions", transactions);
-
         return "transaction-history";
+    }
+
+    /**
+     * Logout and invalidate session.
+     */
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/auth/login?logout=true";
     }
 }
