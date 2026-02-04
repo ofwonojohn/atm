@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Cash - ATM System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand">ATM System</span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="nav-link">Welcome, <strong th:text="${account.accountHolderName}"></strong></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/atm/logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-lg-6 mx-auto">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Withdraw Cash</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Success Message -->
+                        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                            <strong>Success!</strong> <span th:text="${successMessage}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Error!</strong> <span th:text="${error}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+
+                        <!-- Current Balance -->
+                        <div class="alert alert-info" role="alert">
+                            <strong>Current Balance:</strong> Rs. <span th:text="${#numbers.formatDecimal(account.balance, 1, 2)}"></span>
+                        </div>
+
+                        <!-- Withdrawal Form -->
+                        <form th:action="@{/atm/withdraw}" th:object="${withdrawRequest}" method="POST" class="needs-validation">
+                            <!-- Amount Input -->
+                            <div class="mb-4">
+                                <label for="amount" class="form-label">Amount to Withdraw (Rs.)</label>
+                                <input type="number"
+                                       class="form-control form-control-lg"
+                                       id="amount"
+                                       th:field="*{amount}"
+                                       placeholder="Enter amount"
+                                       min="0"
+                                       step="100"
+                                       required>
+                                <small class="text-muted d-block mt-1">Amount must be in multiples of 100</small>
+                                <div th:if="${#fields.hasErrors('amount')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{amount}"></span>
+                                </div>
+                            </div>
+
+                            <!-- Quick Amount Buttons -->
+                            <div class="mb-4">
+                                <label class="form-label">Quick Amounts:</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="quickAmount" id="quick500" value="500" onclick="document.getElementById('amount').value=500">
+                                    <label class="btn btn-outline-primary" for="quick500">500</label>
+
+                                    <input type="radio" class="btn-check" name="quickAmount" id="quick1000" value="1000" onclick="document.getElementById('amount').value=1000">
+                                    <label class="btn btn-outline-primary" for="quick1000">1000</label>
+
+                                    <input type="radio" class="btn-check" name="quickAmount" id="quick2000" value="2000" onclick="document.getElementById('amount').value=2000">
+                                    <label class="btn btn-outline-primary" for="quick2000">2000</label>
+
+                                    <input type="radio" class="btn-check" name="quickAmount" id="quick5000" value="5000" onclick="document.getElementById('amount').value=5000">
+                                    <label class="btn btn-outline-primary" for="quick5000">5000</label>
+                                </div>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                                <button type="submit" class="btn btn-success">Withdraw</button>
+                                <a href="/atm/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <p>&copy; 2024 ATM System. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
