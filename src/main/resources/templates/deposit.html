@@ -51,14 +51,14 @@
 
                         <!-- Current Balance -->
                         <div class="alert alert-info" role="alert">
-                            <strong>Current Balance:</strong> Rs. <span th:text="${#numbers.formatDecimal(account.balance, 1, 2)}"></span>
+                            <strong>Current Balance:</strong> Shs. <span th:text="${#numbers.formatDecimal(account.balance, 1, 2)}"></span>
                         </div>
 
                         <!-- Deposit Form -->
                         <form th:action="@{/atm/deposit}" th:object="${depositRequest}" method="POST" class="needs-validation">
                             <!-- Amount Input -->
                             <div class="mb-4">
-                                <label for="amount" class="form-label">Amount to Deposit (Rs.)</label>
+                                <label for="amount" class="form-label">Amount to Deposit (Shs.)</label>
                                 <input type="number"
                                        class="form-control form-control-lg"
                                        id="amount"

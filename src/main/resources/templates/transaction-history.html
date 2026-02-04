@@ -47,7 +47,7 @@
                                 <p><strong>Account Holder:</strong> <span th:text="${account.accountHolderName}"></span></p>
                             </div>
                             <div class="col-md-6">
-                                <p><strong>Current Balance:</strong> <span class="text-success font-weight-bold">Rs. <span th:text="${#numbers.formatDecimal(account.balance, 1, 2)}"></span></span></p>
+                                <p><strong>Current Balance:</strong> <span class="text-success font-weight-bold">Shs. <span th:text="${#numbers.formatDecimal(account.balance, 1, 2)}"></span></span></p>
                                 <p><strong>Last Transaction:</strong> <span th:text="${account.lastTransactionDate != null ? #temporals.format(account.lastTransactionDate, 'dd MMM yyyy HH:mm') : 'No transactions yet'}"></span></p>
                             </div>
                         </div>
@@ -71,9 +71,9 @@
                                         <tr>
                                             <th>Date & Time</th>
                                             <th>Type</th>
-                                            <th>Amount (Rs.)</th>
+                                            <th>Amount (Shs.)</th>
                                             <th>Description</th>
-                                            <th>Balance After (Rs.)</th>
+                                            <th>Balance After (Shs.)</th>
                                             <th>Status</th>
                                         </tr>
                                     </thead>
@@ -91,8 +91,8 @@
 
                                             <!-- Amount -->
                                             <td>
-                                                <span class="text-danger" th:if="${transaction.transactionType == 'WITHDRAWAL'}">-Rs. <span th:text="${#numbers.formatDecimal(transaction.amount, 1, 2)}"></span></span>
-                                                <span class="text-success" th:if="${transaction.transactionType == 'DEPOSIT'}">+Rs. <span th:text="${#numbers.formatDecimal(transaction.amount, 1, 2)}"></span></span>
+                                                <span class="text-danger" th:if="${transaction.transactionType == 'WITHDRAWAL'}">-Shs. <span th:text="${#numbers.formatDecimal(transaction.amount, 1, 2)}"></span></span>
+                                                <span class="text-success" th:if="${transaction.transactionType == 'DEPOSIT'}">+Shs. <span th:text="${#numbers.formatDecimal(transaction.amount, 1, 2)}"></span></span>
                                                 <span th:unless="${transaction.transactionType == 'WITHDRAWAL' or transaction.transactionType == 'DEPOSIT'}" th:text="${#numbers.formatDecimal(transaction.amount, 1, 2)}"></span>
                                             </td>
 
